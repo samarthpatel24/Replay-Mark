@@ -7,13 +7,18 @@ import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { startServer } from '../server.js';
 
-const timeout = setTimeout(() => { console.error('UI test exceeded 45 seconds.'); app.exit(1); }, 45000);
+const live = process.argv.includes('--live');
+const timeout = setTimeout(() => { console.error('UI test timed out.'); app.exit(1); }, live ? 90000 : 45000);
 app.on('window-all-closed', () => {});
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 let server, dataDir;
 const js = (win, source) => win.webContents.executeJavaScript(source, true);
-async function waitFor(win, expression) {
-  const deadline = Date.now() + 12000;
+async function screenshot(win, name) {
+  await js(win, 'new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
+  await writeFile(join(root, '.data', name), (await win.webContents.capturePage()).toPNG());
+}
+async function waitFor(win, expression, milliseconds = 12000) {
+  const deadline = Date.now() + milliseconds;
   while (Date.now() < deadline) { if (await js(win, expression)) return; await delay(100); }
   throw new Error('Timed out: ' + expression);
 }
@@ -26,8 +31,8 @@ try {
   console.log('UI: starting isolated server');
   server = await startServer({ dataDir, port: 0, demo: true });
   const origin = `http://127.0.0.1:${server.address().port}`;
-  const viewer = new BrowserWindow({ show: false, width: 1460, height: 1000, webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true } });
-  const hud = new BrowserWindow({ show: false, width: 1280, height: 900, webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true } });
+  const viewer = new BrowserWindow({ show: false, width: 1460, height: 1000, webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true, backgroundThrottling: false } });
+  const hud = new BrowserWindow({ show: false, width: 1280, height: 900, webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true, backgroundThrottling: false } });
   await viewer.loadURL(origin);
   console.log('UI: companion loaded');
   await waitFor(viewer, 'document.querySelectorAll(".player-row").length === 12');
@@ -57,12 +62,26 @@ try {
   assert.equal(await js(viewer, 'document.querySelectorAll(".event-row").length'), 30);
   await js(viewer, 'document.querySelector("#tab-bookmarks").click()');
   await mkdir(join(root, '.data'), { recursive: true });
-  await writeFile(join(root, '.data', 'ui-desktop.png'), (await viewer.webContents.capturePage()).toPNG());
+  await screenshot(viewer, 'ui-desktop.png');
   viewer.setSize(390, 844);
   await delay(200);
   assert.equal(await js(viewer, 'document.documentElement.scrollWidth <= innerWidth'), true, 'Mobile layout overflows');
-  await writeFile(join(root, '.data', 'ui-mobile.png'), (await viewer.webContents.capturePage()).toPNG());
+  await screenshot(viewer, 'ui-mobile.png');
   console.log('UI passed: viewer ↔ HUD, timestamp seek, bookmark writes, comments, map layers, tabs, mobile width.');
+  if (live) {
+    viewer.setSize(1460, 1000);
+    await js(viewer, 'document.querySelector("#lookup").value="125682043";document.querySelector("#loadForm").requestSubmit()');
+    await waitFor(viewer, 'document.querySelector("#matchTitle").textContent === "Match #125682043"', 30000);
+    await js(viewer, 'document.querySelector("#setActive").click()');
+    await waitFor(viewer, 'document.querySelector("#setActive").disabled');
+    await js(viewer, 'document.querySelector("#seekTime").value="5:00";document.querySelector("#seekForm").requestSubmit()');
+    await waitFor(viewer, 'document.querySelector("#clock").textContent === "5:00"');
+    await waitFor(viewer, 'document.querySelector("#schematic").style.display === "none"');
+    assert.equal(await js(viewer, 'document.querySelectorAll(".health-bar").length'), 12);
+    assert.equal(await js(viewer, 'document.querySelector("#duration").textContent'), '/ 15:52');
+    await screenshot(viewer, 'ui-live.png');
+    console.log('Live match passed: 125682043, 15:52, 12 players, map image loaded, recorded health visible.');
+  }
   process.exitCode = 0;
 } catch (e) { console.error(e); process.exitCode = 1; }
 finally {

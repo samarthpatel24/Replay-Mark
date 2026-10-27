@@ -10,6 +10,7 @@ Local Deadlock replay companion: 2D match playback, bookmarks, comments, item hi
 - Seeded demo with the existing mockup workspace: `node mockup/server.mjs`
 - Tests, no installation required: `node --test app/test/*.test.mjs`
 - Electron UI check: `npm --prefix app run test:ui`
+- Live match UI check (network required): `npm --prefix app run test:ui -- --live`
 - Windows package, after installing dependencies: `npm --prefix app run dist`
 
 Close browser-mode server before starting desktop app; both use port 47800.
@@ -18,7 +19,7 @@ Close browser-mode server before starting desktop app; both use port 47800.
 
 - Fresh app storage starts without bookmarks or an active match. Sample data is available to explore; select **Set active** to connect it to the HUD simulator.
 - Load match ID, or numeric Steam account ID → recent match. Actual metadata, hero/item/map assets, and player names are fetched by Node and cached.
-- Replay controls, timestamp entry, timeline events, selected-player trail, and inventory all use the current replay time. Team souls and K/D/A use recorded stats snapshots; unavailable values stay unknown.
+- Replay controls, timestamp entry, timeline events, selected-player trail, and inventory all use the current replay time. Team souls, levels, and K/D/A use recorded stats snapshots; health uses movement samples. Unavailable values stay unknown, and positions are hidden after an incomplete path ends.
 - Map has trails/deaths/objectives toggles. Bookmarks support tags, edits, deletion, comments, clickable comment timestamps, and SSE updates.
 - HUD simulator at `/hud` exercises the URL/title bridge and shared playback. It does not control Deadlock.
 - Desktop startup uses an isolated, sandboxed renderer, one app instance, and waits for pending storage writes before quitting.
@@ -39,9 +40,8 @@ One server process per data directory. Bookmark writes serialize and use temp-fi
 
 ## Verification and remaining work
 
-- Seven automated checks pass: desktop startup/navigation/shutdown policy with Electron doubles, time parsing, map decoding and item boundaries, fresh storage, HTTP handlers/SSE/validation/cache/persistence, corrupt-file preservation, and the actual hash/title bridge script.
+- Eight automated checks pass, including a scrubbed real-data fixture for match 125686736. They cover non-contiguous player slots, incomplete paths, health, stats gaps, objective names, and buy/sell boundaries, alongside desktop policy, storage, HTTP/SSE, and bridge checks.
 - Unit HTTP tests use an in-memory stream transport. The Electron UI check also runs a real loopback server and exercises companion/HUD sync, timestamp seeking, bookmarks, comments, map layers, tabs, and mobile width. Screenshots are saved under `app/.data/`.
 - Desktop dependencies are installed and pinned by `app/package-lock.json`. The native UI check passes; Windows packaging and installation are still unverified.
-- Real map calibration, patch-compatible assets, objective ID names, and live API data still need verification. API cache misses use `disable_steam=true` and report errors rather than spending Steam fallback requests or substituting sample data.
+- Live UI loading passed for match 125682043: 15:52 duration, 12 players, loaded minimap, health, and levels. Real map calibration and patch-compatible assets still need verification. Objective names come from the protobuf enum; real objective map positions remain unmapped. API cache misses use `disable_steam=true` and report errors rather than substituting sample data.
 - Phase 0 Windows spike is still required before the real Panorama mod. No VPK or working in-game integration is claimed.
-- See [PLAN.md](PLAN.md), [RESEARCH.md](RESEARCH.md), and [CHECKS.md](CHECKS.md).
