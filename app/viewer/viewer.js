@@ -5,6 +5,8 @@ let api, state, match, selected = 0, tab = 'bookmarks', filter = 'all', thread =
 let previousSecond = -1, previousBookmarks = '', displayedActive = null;
 const detail = $('#details');
 const layers = { lanes: true, camps: true, trails: true, deaths: true, objectives: true };
+const camera = { zoom: 1, x: 300, y: 300, follow: false };
+let drag;
 const notice = (text, error = false) => { $('#notice').textContent = text; $('#notice').classList.toggle('error', error); };
 const run = fn => (...args) => { try { return Promise.resolve(fn(...args)).catch(e => notice(e.message, true)); } catch (e) { notice(e.message, true); } };
 const player = slot => match.players.find(p => p.slot === slot);
@@ -19,6 +21,7 @@ async function load(id) {
   const loaded = await api('/api/match/' + encodeURIComponent(id));
   if (generation !== loading) return;
   match = loaded;
+  Object.assign(camera, { zoom: 1, x: 300, y: 300, follow: false });
   selected = loaded.players[0].slot;
   local = { match: loaded.id, t: 0, playing: false, speed: 1, at: Date.now() };
   previousSecond = -1;
@@ -61,6 +64,28 @@ async function control(patch) {
 }
 const seek = t => control({ t: clamp(t, match.duration) });
 
+function renderCamera(t) {
+  if (camera.follow) {
+    const pos = position(currentPlayer(), t);
+    if (pos) { camera.x = pos.x; camera.y = pos.y; }
+  }
+  const size = 600 / camera.zoom;
+  const left = Math.max(0, Math.min(600 - size, camera.x - size / 2));
+  const top = Math.max(0, Math.min(600 - size, camera.y - size / 2));
+  camera.x = left + size / 2; camera.y = top + size / 2;
+  $('#map').setAttribute('viewBox', `${left} ${top} ${size} ${size}`);
+  $('#followPlayer').setAttribute('aria-pressed', String(camera.follow));
+  $('#zoomOut').disabled = camera.zoom <= 1;
+  $('#zoomIn').disabled = camera.zoom >= 4;
+  const label = `${camera.zoom.toFixed(1)}×${camera.follow ? ' · Following ' + currentPlayer().name : ''}`;
+  if ($('#mapCameraStatus').textContent !== label) $('#mapCameraStatus').textContent = label;
+}
+
+function selectPlayer(slot) {
+  selected = slot; camera.follow = true; camera.zoom = Math.max(2, camera.zoom);
+  renderRoster(); renderDetails(); renderCamera(now());
+}
+
 function renderRoster() {
   const t = now();
   const focused = document.activeElement?.closest('.player-row')?.dataset.player;
@@ -72,6 +97,7 @@ function renderRoster() {
 }
 
 function renderMap(t) {
+  renderCamera(t);
   const dead = new Set(match.kills.filter(d => t >= d.t && t < d.t + d.duration).map(d => d.victim));
   const p = currentPlayer();
   const points = [];
@@ -117,7 +143,7 @@ function renderTime() {
     });
     $('#amberSouls').textContent = totals[0] == null ? '—' : totals[0].toLocaleString();
     $('#sapphireSouls').textContent = totals[1] == null ? '—' : totals[1].toLocaleString();
-    $('#soulLead').textContent = totals.some(total => total == null) ? 'Waiting for stats snapshots' : totals[0] === totals[1] ? 'Souls even' : `${totals[0] > totals[1] ? 'Amber' : 'Sapphire'} +${Math.abs(totals[0] - totals[1]).toLocaleString()}`;
+    $('#soulLead').textContent = totals.some(total => total == null) ? 'Waiting for stats snapshots' : totals[0] === totals[1] ? 'Souls even' : `${totals[0] > totals[1] ? 'Hidden King' : 'Archmother'} +${Math.abs(totals[0] - totals[1]).toLocaleString()}`;
     const add = $('#addBookmark'); if (add) add.textContent = '+ Bookmark at ' + fmt(t);
     if (tab === 'stats' || tab === 'items') renderDetails();
   }
@@ -147,7 +173,7 @@ function renderDetails() {
     detail.innerHTML = `<div class="details-heading"><div><h3>Kill feed</h3><p>All players · ${match.kills.length} recorded deaths</p></div></div>${match.kills.map(d => `<div class="event-row"><button class="timestamp" data-seek="${d.t}">${fmt(d.t)}</button><span class="event-copy"><span style="color:${color(player(d.killer)?.team)}">${esc(player(d.killer)?.name || 'World / NPC')}</span> → ${esc(player(d.victim)?.name || 'Unknown')}<small>Respawn duration: ${Math.round(d.duration)}s</small></span></div>`).join('') || '<p class="empty">No death data available.</p>'}`;
   } else {
     const s = snapshot(p, t), max = Math.max(1, ...match.players.flatMap(p => p.stats.map(s => s.net_worth || 0)));
-    detail.innerHTML = `<div class="details-heading"><div><h3>${esc(p.name)} · Stats</h3><p>${s.t == null ? "No snapshot yet" : "Latest snapshot at " + fmt(s.t)} · viewing ${fmt(t)}</p></div></div><div class="stat-grid">${[['Net worth', s.net_worth], ['K / D / A', `${s.kills ?? "—"} / ${s.deaths ?? "—"} / ${s.assists ?? "—"}`], ['Player damage', s.player_damage], ['Creep kills', s.creep_kills]].map(([label, value]) => `<div class="stat"><small>${label}</small><strong>${typeof value === 'number' ? value.toLocaleString() : value ?? '—'}</strong></div>`).join('')}</div><p class="detail-note">NET WORTH · ALL PLAYERS</p><svg id="networth" viewBox="0 0 320 210" role="img" aria-label="Net worth over match time. Selected player highlighted.">${[0, .5, 1].map(f => `<path d="M35 ${175 - f * 150}H310" stroke="#ffffff10"/><text x="2" y="${178 - f * 150}" fill="#89918e" font-size="8">${Math.round(max * f / 1000)}k</text>`).join('')}${match.players.map(p => `<polyline points="${p.stats.map(s => `${35 + s.t / match.duration * 270},${175 - (s.net_worth || 0) / max * 150}`).join(' ')}" stroke="${color(p.team)}" stroke-width="${p.slot === selected ? 2.5 : 1}" opacity="${p.slot === selected ? 1 : .2}" fill="none"/>`).join('')}<path d="M${35 + t / match.duration * 270} 20V180" stroke="#e8c681" stroke-dasharray="3 4"/><text x="35" y="198" fill="#89918e" font-size="8">0:00</text><text x="280" y="198" fill="#89918e" font-size="8">${fmt(match.duration)}</text></svg><div class="chart-legend"><span class="amber">— Amber</span><span class="sapphire">— Sapphire</span><span>Bright line: ${esc(p.name)}</span></div><p class="detail-note">Snapshots are roughly 3 minutes apart; intermediate stats are not known. Select another player to highlight their line.</p>`;
+    detail.innerHTML = `<div class="details-heading"><div><h3>${esc(p.name)} · Stats</h3><p>${s.t == null ? "No snapshot yet" : "Latest snapshot at " + fmt(s.t)} · viewing ${fmt(t)}</p></div></div><div class="stat-grid">${[['Net worth', s.net_worth], ['K / D / A', `${s.kills ?? "—"} / ${s.deaths ?? "—"} / ${s.assists ?? "—"}`], ['Player damage', s.player_damage], ['Creep kills', s.creep_kills]].map(([label, value]) => `<div class="stat"><small>${label}</small><strong>${typeof value === 'number' ? value.toLocaleString() : value ?? '—'}</strong></div>`).join('')}</div><p class="detail-note">NET WORTH · ALL PLAYERS</p><svg id="networth" viewBox="0 0 320 210" role="img" aria-label="Net worth over match time. Selected player highlighted.">${[0, .5, 1].map(f => `<path d="M35 ${175 - f * 150}H310" stroke="#ffffff10"/><text x="2" y="${178 - f * 150}" fill="#89918e" font-size="8">${Math.round(max * f / 1000)}k</text>`).join('')}${match.players.map(p => `<polyline points="${p.stats.map(s => `${35 + s.t / match.duration * 270},${175 - (s.net_worth || 0) / max * 150}`).join(' ')}" stroke="${color(p.team)}" stroke-width="${p.slot === selected ? 2.5 : 1}" opacity="${p.slot === selected ? 1 : .2}" fill="none"/>`).join('')}<path d="M${35 + t / match.duration * 270} 20V180" stroke="#e8c681" stroke-dasharray="3 4"/><text x="35" y="198" fill="#89918e" font-size="8">0:00</text><text x="280" y="198" fill="#89918e" font-size="8">${fmt(match.duration)}</text></svg><div class="chart-legend"><span class="amber">— Hidden King</span><span class="sapphire">— Archmother</span><span>Bright line: ${esc(p.name)}</span></div><p class="detail-note">Snapshots are roughly 3 minutes apart; intermediate stats are not known. Select another player to highlight their line.</p>`;
   }
 }
 
@@ -184,12 +210,37 @@ $('#speed').onchange = run(e => control({ speed: Number(e.target.value) }));
 $('#scrubber').oninput = () => { $('#timelineTime').textContent = `${fmt(Number($('#scrubber').value))} / ${fmt(match.duration)}`; };
 $('#scrubber').onchange = run(e => seek(Number(e.target.value)));
 document.querySelectorAll('[data-layer]').forEach(input => { input.onchange = () => { layers[input.dataset.layer] = input.checked; if (match) renderMap(now()); }; });
+function zoomMap(factor) {
+  if (!match) return;
+  camera.zoom = Math.max(1, Math.min(4, camera.zoom * factor)); renderCamera(now());
+}
+$('#zoomIn').onclick = () => zoomMap(1.25);
+$('#zoomOut').onclick = () => zoomMap(1 / 1.25);
+$('#resetMap').onclick = () => { Object.assign(camera, { zoom: 1, x: 300, y: 300, follow: false }); if (match) renderCamera(now()); };
+$('#followPlayer').onclick = () => { if (!match) return; camera.follow = !camera.follow; if (camera.follow) camera.zoom = Math.max(2, camera.zoom); renderCamera(now()); };
+$('#map').addEventListener('wheel', e => { e.preventDefault(); zoomMap(e.deltaY < 0 ? 1.2 : 1 / 1.2); }, { passive: false });
+$('#map').onpointerdown = e => {
+  if (!match || e.button !== 0 || camera.zoom <= 1 || e.target.closest('.player-dot')) return;
+  camera.follow = false;
+  drag = { id: e.pointerId, x: e.clientX, y: e.clientY, centerX: camera.x, centerY: camera.y };
+  $('#map').setPointerCapture(e.pointerId);
+};
+$('#map').onpointermove = e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const rect = $('#map').getBoundingClientRect(), size = 600 / camera.zoom;
+  camera.x = drag.centerX - (e.clientX - drag.x) / rect.width * size;
+  camera.y = drag.centerY - (e.clientY - drag.y) / rect.height * size;
+  renderCamera(now());
+};
+function endDrag(e) { if (drag?.id === e.pointerId) { drag = null; if ($('#map').hasPointerCapture(e.pointerId)) $('#map').releasePointerCapture(e.pointerId); } }
+$('#map').onpointerup = endDrag;
+$('#map').onpointercancel = endDrag;
 $('#seekForm').onsubmit = run(e => { e.preventDefault(); return seek(parseTimestamp($('#seekTime').value, match?.duration)); });
 $('#prevMarker').onclick = run(() => seek([...bookmarks()].reverse().find(b => b.t < now() - 1)?.t ?? 0));
 $('#nextMarker').onclick = run(() => seek(bookmarks().find(b => b.t > now() + 1)?.t ?? match.duration));
 document.addEventListener('click', run(async e => {
   const seekButton = e.target.closest('[data-seek]'); if (seekButton) return seek(Number(seekButton.dataset.seek));
-  const p = e.target.closest('[data-player]'); if (p) { selected = Number(p.dataset.player); renderRoster(); renderDetails(); return; }
+    const p = e.target.closest('[data-player]'); if (p) { selectPlayer(Number(p.dataset.player)); return; }
   if (e.target.closest('#addBookmark')) return openBookmark();
   const f = e.target.closest('[data-filter]'); if (f) { filter = f.dataset.filter; renderDetails(); return; }
   const th = e.target.closest('[data-thread]'); if (th) { thread = thread === th.dataset.thread ? null : th.dataset.thread; renderDetails(); return; }
@@ -226,7 +277,7 @@ $('#bookmarkForm').onsubmit = run(async e => {
 });
 document.addEventListener('keydown', run(e => {
   if (!match || e.target.closest('input,select,textarea,button,a,[role="tab"]') || $('#bookmarkDialog').open) return;
-  if (e.target.closest('[data-player]') && ['Enter', ' '].includes(e.key)) { e.preventDefault(); selected = Number(e.target.closest('[data-player]').dataset.player); renderDetails(); return; }
+  if (e.target.closest('[data-player]') && ['Enter', ' '].includes(e.key)) { e.preventDefault(); selectPlayer(Number(e.target.closest('[data-player]').dataset.player)); return; }
   if (e.key.toLowerCase() === 'b') openBookmark();
   if (e.key === ' ') { e.preventDefault(); return control({ playing: !clockState().playing }); }
   if (e.key === 'ArrowRight') { e.preventDefault(); return seek(now() + 10); }
