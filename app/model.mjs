@@ -42,6 +42,41 @@ export function snapshot(player, t) {
 
 export const itemsAt = (player, t) => player.items.filter(item => item.t <= t && !(item.sold > 0 && item.sold <= t));
 
+export function mapGeometry(map, objectives = []) {
+  const radius = map?.radius;
+  const result = { lanes: [], camps: [], objectives: [] };
+  if (!Number.isFinite(radius) || radius <= 0) return result;
+  const point = p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]) ? { x: (1 + p[0] / radius) * 300, y: (1 - p[1] / radius) * 300 } : null;
+  for (const lane of map.zipline_paths || []) {
+    if (!Array.isArray(lane.origin) || !Array.isArray(lane.P0_points)) continue;
+    const world = (p, offset = [0, 0]) => point([lane.origin[0] + p[0] + offset[0], lane.origin[1] + p[1] + offset[1]]);
+    let d = '';
+    for (let i = 0; i < lane.P0_points.length; i++) {
+      const p = lane.P0_points[i], pos = world(p);
+      if (!pos) { d = ''; break; }
+      if (i === 0) d = `M${pos.x},${pos.y}`;
+      else if (lane.P2_points?.[i - 1] && lane.P1_points?.[i]) {
+        const a = world(lane.P0_points[i - 1], lane.P2_points[i - 1]), b = world(p, lane.P1_points[i]);
+        if (!a || !b) { d = ''; break; }
+        d += ` C${a.x},${a.y} ${b.x},${b.y} ${pos.x},${pos.y}`;
+      } else d += ` L${pos.x},${pos.y}`;
+    }
+    if (d && lane.P0_points.length > 1) result.lanes.push({ d, color: /^#[0-9a-f]{6}$/i.test(lane.color) ? lane.color : '#89918e' });
+  }
+  for (const camp of map.neutral_camps || []) {
+    const pos = point(camp.position);
+    if (pos) result.camps.push({ name: camp.name, kind: camp.kind, icon: camp.icon || '', pos });
+  }
+  for (const [key, pos] of Object.entries(map.objective_positions || {})) {
+    const parts = key.match(/^team([01])_(core|titan|tier([12])_([1-4]))$/);
+    if (!parts || !Number.isFinite(pos.left_relative) || !Number.isFinite(pos.top_relative)) continue;
+    const team = Number(parts[1]), id = parts[2] === 'core' ? 0 : parts[2] === 'titan' ? 9 : Number(parts[4]) + (parts[3] === '2' ? 4 : 0);
+    const event = objectives.find(o => o.team === team && o.team_objective_id === id && o.destroyed_time_s > 0);
+    result.objectives.push({ key, team, name: objectiveName(id), pos: { x: pos.left_relative * 600, y: pos.top_relative * 600 }, destroyedAt: event?.destroyed_time_s ?? null });
+  }
+  return result;
+}
+
 export function sampleMatch() {
   const names = ['Abrams', 'Haze', 'Seven', 'Dynamo', 'Paradox', 'Ivy', 'Infernus', 'Wraith', 'Bebop', 'McGinnis', 'Vindicta', 'Kelvin'];
   const duration = 1520;
@@ -66,7 +101,7 @@ export function sampleMatch() {
   });
   const objectives = [320, 540, 820, 1060, 1380, 1500].map((t, i) => ({ t, team: i % 2, name: ['Guardian', 'Guardian', 'Walker', 'Walker', 'Shrine', 'Patron'][i], pos: { x: 150 + i * 55, y: 460 - i * 61 } }));
   for (const p of players) for (const s of p.stats) { s.kills = kills.filter(d => d.t <= s.t && d.killer === p.slot).length; s.deaths = kills.filter(d => d.t <= s.t && d.victim === p.slot).length; }
-  return { id: SAMPLE_ID, label: 'Sample match', duration, sample: true, players, kills, objectives, map: null, warnings: [] };
+  return { id: SAMPLE_ID, label: 'Sample match', duration, sample: true, players, kills, objectives, map: null, mapLayers: { lanes: [], camps: [], objectives: objectives.map((o, i) => ({ ...o, key: 'sample-' + i, destroyedAt: o.t })) }, warnings: [] };
 }
 
 export function normalizeMatch(id, raw, assets) {
@@ -97,7 +132,7 @@ export function normalizeMatch(id, raw, assets) {
   if (!assets.items?.length) warnings.push('Item assets unavailable; purchase classification omitted.');
   if (!assets.heroes?.length) warnings.push('Hero assets unavailable; showing hero IDs.');
   if (!assets.map) warnings.push('Map asset unavailable; schematic background only.');
-  return { id: String(id), label: `Match #${id}`, duration: info.duration_s, sample: false, players, kills, objectives, map: assets.map?.images?.minimap || null, warnings };
+  return { id: String(id), label: `Match #${id}`, duration: info.duration_s, sample: false, players, kills, objectives, map: assets.map?.images?.minimap || null, mapLayers: mapGeometry(assets.map, info.objectives), warnings };
 }
 
 // ECitadelTeamObjective: SteamDatabase/Protobufs/deadlock/citadel_gcmessages_common.proto.

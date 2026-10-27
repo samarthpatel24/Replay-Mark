@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import vm from 'node:vm';
 import { createServer } from '../server.js';
 import { transport } from './transport.mjs';
-import { sampleMatch, normalizeMatch, position, playbackTime, snapshot, parseTimestamp, itemsAt, healthAt } from '../model.mjs';
+import { sampleMatch, normalizeMatch, position, playbackTime, snapshot, parseTimestamp, itemsAt, healthAt, mapGeometry } from '../model.mjs';
 import { escapeHTML, safeImage } from '../viewer/client.js';
 
 test('timestamp entry accepts exact boundaries and rejects invalid or out-of-match times', () => {
@@ -15,6 +15,17 @@ test('timestamp entry accepts exact boundaries and rejects invalid or out-of-mat
   assert.equal(parseTimestamp('25:20', 1520), 1520);
   for (const value of ['', '12:60', '12:4', '-1:00', '1:02:03', '25:21', 'Infinity:00']) assert.throws(() => parseTimestamp(value, 1520));
   assert.throws(() => parseTimestamp('12:40', undefined), /load/);
+});
+
+test('map layers share world projection, zipline origins/handles, and objective destruction time', () => {
+  const geometry = mapGeometry({ radius: 100, zipline_paths: [{ origin: [-100, -100], color: '#29b1cc', P0_points: [[0, 0], [200, 200]], P1_points: [[0, 0], [-50, 0]], P2_points: [[50, 0], [0, 0]] }], neutral_camps: [{ name: 'Camp', position: [0, 0] }], objective_positions: { team1_tier1_3: { left_relative: .5, top_relative: .25 }, unsupported: { left_relative: .1, top_relative: .1 } } }, [{ team: 1, team_objective_id: 3, destroyed_time_s: 120 }]);
+  assert.equal(geometry.lanes[0].d, 'M0,600 C150,600 450,0 600,0');
+  assert.deepEqual(geometry.camps[0].pos, { x: 300, y: 300 });
+  assert.equal(geometry.objectives.length, 1);
+  assert.deepEqual(geometry.objectives[0].pos, { x: 300, y: 150 });
+  assert.equal(geometry.objectives[0].destroyedAt, 120);
+  assert.equal(geometry.objectives[0].name, 'Guardian · Lane 3');
+  assert.deepEqual(mapGeometry(null), { lanes: [], camps: [], objectives: [] });
 });
 
 test('real metadata: non-contiguous slots, path endings, health, stats gaps, objectives, and shop items', async () => {
