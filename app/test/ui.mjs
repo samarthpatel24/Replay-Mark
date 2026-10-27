@@ -36,6 +36,9 @@ try {
   await viewer.loadURL(origin);
   console.log('UI: companion loaded');
   await waitFor(viewer, 'document.querySelectorAll(".player-row").length === 12');
+  assert.equal(await js(viewer, 'document.querySelectorAll("#amberPlayers .player-row").length'), 6);
+  assert.equal(await js(viewer, 'document.querySelectorAll("#sapphirePlayers .player-row").length'), 6);
+  assert.equal(await js(viewer, 'document.querySelector("#amberPlayers").closest("aside").getBoundingClientRect().right < document.querySelector(".map-frame").getBoundingClientRect().left && document.querySelector(".map-frame").getBoundingClientRect().right < document.querySelector("#sapphirePlayers").closest("aside").getBoundingClientRect().left'), true, 'Map must sit between team rosters');
   await hud.loadURL(origin + '/hud');
   console.log('UI: HUD loaded');
   await waitFor(hud, 'document.querySelector("#hudStatus").textContent.includes("connected")');
@@ -51,6 +54,15 @@ try {
   await js(viewer, 'const card=[...document.querySelectorAll(".bookmark-card")].find(c=>c.textContent.includes("From HUD smoke"));card.querySelector("[data-thread]").click();document.querySelector(".reply input").value="Watch 12:30";document.querySelector(".reply").requestSubmit()');
   await waitFor(viewer, 'document.querySelector(".comment")?.textContent.includes("Watch 12:30") && document.querySelector(".reply input").value === ""');
   await js(viewer, 'document.querySelector(".comment [data-seek]").click()');
+  await waitFor(viewer, 'document.querySelector("#clock").textContent === "12:30"');
+  assert.equal(await js(viewer, 'document.querySelectorAll("#objectives [data-destroyed=true]").length'), 2);
+  await js(viewer, 'document.querySelector("#seekTime").value="5:19";document.querySelector("#seekForm").requestSubmit()');
+  await waitFor(viewer, 'document.querySelector("#clock").textContent === "5:19"');
+  assert.equal(await js(viewer, 'document.querySelectorAll("#objectives [data-destroyed=true]").length'), 0);
+  await js(viewer, 'document.querySelector("#seekTime").value="5:20";document.querySelector("#seekForm").requestSubmit()');
+  await waitFor(viewer, 'document.querySelector("#clock").textContent === "5:20"');
+  assert.equal(await js(viewer, 'document.querySelectorAll("#objectives [data-destroyed=true]").length'), 1);
+  await js(viewer, 'document.querySelector("#seekTime").value="12:30";document.querySelector("#seekForm").requestSubmit()');
   await waitFor(viewer, 'document.querySelector("#clock").textContent === "12:30"');
   await js(viewer, 'const layer=document.querySelector("[data-layer=trails]");layer.checked=false;layer.dispatchEvent(new Event("change"))');
   await waitFor(viewer, 'document.querySelector("#trails").children.length === 0');
@@ -78,6 +90,10 @@ try {
     await waitFor(viewer, 'document.querySelector("#clock").textContent === "5:00"');
     await waitFor(viewer, 'document.querySelector("#schematic").style.display === "none"');
     assert.equal(await js(viewer, 'document.querySelectorAll(".health-bar").length'), 12);
+    assert.equal(await js(viewer, 'document.querySelectorAll("#dots .player-dot image").length'), 12);
+    assert.equal(await js(viewer, 'document.querySelectorAll("#lanes path").length'), 3);
+    assert.equal(await js(viewer, 'document.querySelectorAll("#camps g").length'), 51);
+    assert.equal(await js(viewer, 'document.querySelectorAll("#objectives g").length'), 16);
     assert.equal(await js(viewer, 'document.querySelector("#duration").textContent'), '/ 15:52');
     await screenshot(viewer, 'ui-live.png');
     console.log('Live match passed: 125682043, 15:52, 12 players, map image loaded, recorded health visible.');

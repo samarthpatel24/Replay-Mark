@@ -4,7 +4,7 @@ import { SAMPLE_ID, TAGS, fmt, clamp, color, playbackTime, position, snapshot, p
 let api, state, match, selected = 0, tab = 'bookmarks', filter = 'all', thread = null, local, loading = 0, modalContext;
 let previousSecond = -1, previousBookmarks = '', displayedActive = null;
 const detail = $('#details');
-const layers = { trails: true, deaths: true, objectives: true };
+const layers = { lanes: true, camps: true, trails: true, deaths: true, objectives: true };
 const notice = (text, error = false) => { $('#notice').textContent = text; $('#notice').classList.toggle('error', error); };
 const run = fn => (...args) => { try { return Promise.resolve(fn(...args)).catch(e => notice(e.message, true)); } catch (e) { notice(e.message, true); } };
 const player = slot => match.players.find(p => p.slot === slot);
@@ -38,7 +38,9 @@ async function load(id) {
     image.setAttribute('href', match.map);
   }
   $('#mapCaption').textContent = match.sample ? 'SCHEMATIC MAP · SIMULATED POSITIONS' : 'API POSITIONS · MAP CALIBRATION UNVERIFIED';
-  notice(match.sample ? 'Sample workspace · Generated data, not match #125686736. Notes save locally. Open HUD simulator to test two-way sync.' : `Loaded real metadata. ${match.warnings.join(' ')} Positions need visual calibration; objective names use IDs. Stats are periodic snapshots.`);
+  $('#lanes').innerHTML = match.mapLayers.lanes.map(lane => `<path d="${esc(lane.d)}" stroke="${esc(lane.color)}" stroke-width="1.5" fill="none" opacity=".7"/>`).join('');
+  $('#camps').innerHTML = match.mapLayers.camps.map(camp => `<g transform="translate(${camp.pos.x} ${camp.pos.y})"><title>${esc(camp.kind)} · ${esc(camp.name)} · spawn location</title>${safeImage(camp.icon) ? `<image href="${safeImage(camp.icon)}" x="-5" y="-5" width="10" height="10"/>` : '<path d="M0,-4L4,4H-4Z" fill="#87baa9"/>'}</g>`).join('');
+  notice(match.sample ? 'Sample workspace · Generated data, not match #125686736. Notes save locally. Open HUD simulator to test two-way sync.' : `Loaded real metadata. ${match.warnings.join(' ')} Stats are periodic snapshots. Camps show spawn locations, not live availability; historical map alignment remains unverified.`);
   renderActive(); renderRoster(); renderMarkers(); renderDetails(); renderTime();
 }
 
@@ -61,10 +63,12 @@ const seek = t => control({ t: clamp(t, match.duration) });
 
 function renderRoster() {
   const t = now();
-  $('#players').innerHTML = [0, 1].map(team => `<div class="roster-team" style="color:${color(team)}">${team === 0 ? 'AMBER' : 'SAPPHIRE'}</div>` + match.players.filter(p => p.team === team).map(p => {
+  const focused = document.activeElement?.closest('.player-row')?.dataset.player;
+  for (const team of [0, 1]) $(team === 0 ? '#amberPlayers' : '#sapphirePlayers').innerHTML = match.players.filter(p => p.team === team).map(p => {
     const s = snapshot(p, t), icon = safeImage(p.icon), health = healthAt(p, t);
-    return `<button class="player-row ${p.slot === selected ? 'selected' : ''}" data-player="${p.slot}" aria-pressed="${p.slot === selected}"><span class="hero-avatar ${p.team === 1 ? 'blue' : ''}">${icon ? `<img src="${icon}" alt="">` : esc(p.name.slice(0, 2).toUpperCase())}</span><span class="player-info">${esc(p.name)}${s.level == null ? '' : `<span class="player-level">Lv ${s.level}</span>`}<small>${esc(p.person)}</small><small>${s.net_worth == null ? 'Souls unavailable' : s.net_worth.toLocaleString() + ' souls'} · ${itemsAt(p, t).length} items</small>${health == null ? '' : `<span class="health-bar" role="meter" aria-label="${esc(p.name)} health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${health}" title="Recorded health: ${health}%"><i style="width:${health}%"></i></span>`}</span><span class="kda">${s.kills ?? '—'} / ${s.deaths ?? '—'} / ${s.assists ?? '—'}</span></button>`;
-  }).join('')).join('');
+    return `<div class="player-card"><button class="player-row ${p.slot === selected ? 'selected' : ''}" data-player="${p.slot}" aria-pressed="${p.slot === selected}" title="${esc(p.person)} · ${esc(p.name)}"><span class="hero-avatar ${p.team === 1 ? 'blue' : ''}">${icon ? `<img src="${icon}" alt="">` : esc(p.name.slice(0, 2).toUpperCase())}</span><span class="player-info"><strong>${esc(p.person)}</strong><small>${esc(p.name)} · Lv ${esc(s.level ?? '—')}</small><small>${s.net_worth == null ? 'Souls unavailable' : esc(s.net_worth.toLocaleString()) + ' souls'}</small>${health == null ? '' : `<span class="health-bar" role="meter" aria-label="${esc(p.name)} health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${health}" title="Recorded health: ${health}%"><i style="width:${health}%"></i></span>`}</span><span class="kda">${esc(s.kills ?? '—')} / ${esc(s.deaths ?? '—')} / ${esc(s.assists ?? '—')}</span></button><div class="roster-items">${itemsAt(p, t).map(i => `<span title="${esc(i.name)}">${safeImage(i.icon) ? `<img src="${safeImage(i.icon)}" alt="${esc(i.name)}">` : '◇'}</span>`).join('') || '<small>No items yet</small>'}</div></div>`;
+  }).join('');
+  if (focused) document.querySelector(`.player-row[data-player="${focused}"]`)?.focus({ preventScroll: true });
 }
 
 function renderMap(t) {
@@ -73,13 +77,21 @@ function renderMap(t) {
   const points = [];
   for (let at = Math.max(0, t - 20); at <= t; at++) { const pos = position(p, at); if (pos) points.push(`${pos.x},${pos.y}`); }
   $('#trails').innerHTML = layers.trails ? `<polyline points="${points.join(' ')}" stroke="${color(p.team)}" stroke-width="3" fill="none" opacity=".6"/>` : '';
+  const focused = document.activeElement?.closest('.player-dot')?.dataset.player;
   $('#dots').innerHTML = match.players.map(p => {
     const pos = position(p, t);
     if (!pos) return '';
-    return `<g class="player-dot" data-player="${p.slot}" tabindex="0" role="button" aria-label="Follow ${esc(p.name)}" transform="translate(${pos.x} ${pos.y})" opacity="${dead.has(p.slot) ? .3 : 1}"><title>${esc(p.name)}</title>${p.slot === selected ? '<circle r="17" fill="none" stroke="#eee9d5" opacity=".7"/>' : ''}<circle r="11" fill="#18241f" stroke="${color(p.team)}"/><text>${esc(p.name.slice(0, 2).toUpperCase())}</text></g>`;
+    const icon = safeImage(p.icon), health = healthAt(p, t);
+    return `<g class="player-dot" data-player="${p.slot}" tabindex="0" role="button" aria-label="Select ${esc(p.name)}" transform="translate(${pos.x} ${pos.y})" opacity="${dead.has(p.slot) ? .3 : 1}"><title>${esc(p.name)}${health == null ? '' : ' · ' + health + '% HP'}</title>${p.slot === selected ? '<circle r="17" fill="none" stroke="#eee9d5" opacity=".7"/>' : ''}<circle r="12" fill="#18241f" stroke="${color(p.team)}"/>${icon ? `<image href="${icon}" x="-10" y="-10" width="20" height="20" clip-path="url(#heroClip)"/>` : `<text>${esc(p.name.slice(0, 2).toUpperCase())}</text>`}${health == null ? '' : `<circle r="13.5" fill="none" stroke="#92c7a4" stroke-width="1.5" stroke-dasharray="${health / 100 * 84.82} 84.82" transform="rotate(-90)"/>`}</g>`;
   }).join('');
+  if (focused) $('#dots').querySelector(`[data-player="${focused}"]`)?.focus({ preventScroll: true });
+  $('#lanes').style.display = layers.lanes ? '' : 'none';
+  $('#camps').style.display = layers.camps ? '' : 'none';
   $('#deaths').innerHTML = layers.deaths ? match.kills.filter(d => d.pos && t >= d.t && t < d.t + 25).map(d => `<text x="${d.pos.x}" y="${d.pos.y}" fill="#e6968a" font-size="20" text-anchor="middle">×</text>`).join('') : '';
-  $('#objectives').innerHTML = layers.objectives ? match.objectives.filter(o => o.pos && o.t > t).map(o => `<rect x="${o.pos.x - 4}" y="${o.pos.y - 4}" width="8" height="8" fill="${color(o.team)}" transform="rotate(45 ${o.pos.x} ${o.pos.y})"><title>${esc(o.name)}</title></rect>`).join('') : '';
+  $('#objectives').innerHTML = layers.objectives ? match.mapLayers.objectives.map(o => {
+    const destroyed = o.destroyedAt != null && t >= o.destroyedAt;
+    return `<g data-objective="${esc(o.key)}" data-destroyed="${destroyed}" transform="translate(${o.pos.x} ${o.pos.y})" opacity="${destroyed ? .25 : .9}"><title>${esc(o.name)} · ${o.destroyedAt == null ? 'no destruction recorded' : 'destroyed at ' + fmt(o.destroyedAt)}</title><circle r="5" fill="#15201c" stroke="${color(o.team)}" stroke-width="1.5"/>${destroyed ? '<path d="M-3,-3L3,3M3,-3L-3,3" stroke="#e6968a" stroke-width="1.5"/>' : '<path d="M0,-3L3,0 0,3 -3,0Z" fill="' + color(o.team) + '"/>'}</g>`;
+  }).join('') : '';
 }
 
 function renderTime() {
