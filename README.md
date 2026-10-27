@@ -40,7 +40,7 @@ One server process per data directory. Bookmark writes serialize and use temp-fi
 
 - Seven automated checks pass: desktop startup/navigation/shutdown policy with Electron doubles, time parsing, map decoding and item boundaries, fresh storage, HTTP handlers/SSE/validation/cache/persistence, corrupt-file preservation, and the actual hash/title bridge script.
 - HTTP tests use an in-memory stream transport because this sandbox blocks listening ports. Browser layout and actual socket behavior remain unverified here.
-- npm registry DNS is blocked in this environment, so dependency installation, Electron launch, and Windows builds have not run. No lockfile was generated.
+- Desktop dependencies are installed and pinned by `app/package-lock.json`. Electron launch and Windows builds still need verification.
 - Real map calibration, patch-compatible assets, objective ID names, and live API data still need verification. API cache misses use `disable_steam=true` and report errors rather than spending Steam fallback requests or substituting sample data.
 - Phase 0 Windows spike is still required before the real Panorama mod. No VPK or working in-game integration is claimed.
 - See [PLAN.md](PLAN.md), [RESEARCH.md](RESEARCH.md), and [CHECKS.md](CHECKS.md).
