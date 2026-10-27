@@ -5,8 +5,13 @@ import { startServer, defaultDataDir } from './server.js';
 
 let server, mainWindow, quitting = false;
 if (!app.requestSingleInstanceLock()) app.quit();
-else {
-  try {
+else launch().catch(async e => {
+  await app.whenReady();
+  dialog.showErrorBox('Cannot start Replay Mark', e.code === 'EADDRINUSE' ? 'Port 47800 is already in use. Close the standalone server or other app using it, then restart Replay Mark.' : e.message);
+  app.quit();
+});
+
+async function launch() {
     app.setName('Replay Mark');
     const dataDir = resolve(defaultDataDir());
     mkdirSync(dataDir, { recursive: true });
@@ -34,9 +39,4 @@ else {
       return win;
     }
     mainWindow = openWindow();
-  } catch (e) {
-    await app.whenReady();
-    dialog.showErrorBox('Cannot start Replay Mark', e.code === 'EADDRINUSE' ? 'Port 47800 is already in use. Close the standalone server or other app using it, then restart Replay Mark.' : e.message);
-    app.quit();
-  }
 }

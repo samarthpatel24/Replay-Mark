@@ -10,6 +10,7 @@
     "start": "electron .",
     "server": "node server.js",
     "test": "node --test test/*.test.mjs",
+    "test:ui": "electron test/ui.mjs",
     "dist": "electron-builder --win portable nsis --x64 --publish never"
   },
   "devDependencies": {

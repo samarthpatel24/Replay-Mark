@@ -9,6 +9,7 @@ Local Deadlock replay companion: 2D match playback, bookmarks, comments, item hi
 - Desktop, after installing dependencies: `npm --prefix app install && npm --prefix app start`
 - Seeded demo with the existing mockup workspace: `node mockup/server.mjs`
 - Tests, no installation required: `node --test app/test/*.test.mjs`
+- Electron UI check: `npm --prefix app run test:ui`
 - Windows package, after installing dependencies: `npm --prefix app run dist`
 
 Close browser-mode server before starting desktop app; both use port 47800.
@@ -39,8 +40,8 @@ One server process per data directory. Bookmark writes serialize and use temp-fi
 ## Verification and remaining work
 
 - Seven automated checks pass: desktop startup/navigation/shutdown policy with Electron doubles, time parsing, map decoding and item boundaries, fresh storage, HTTP handlers/SSE/validation/cache/persistence, corrupt-file preservation, and the actual hash/title bridge script.
-- HTTP tests use an in-memory stream transport because this sandbox blocks listening ports. Browser layout and actual socket behavior remain unverified here.
-- Desktop dependencies are installed and pinned by `app/package-lock.json`. Electron launch and Windows builds still need verification.
+- Unit HTTP tests use an in-memory stream transport. The Electron UI check also runs a real loopback server and exercises companion/HUD sync, timestamp seeking, bookmarks, comments, map layers, tabs, and mobile width. Screenshots are saved under `app/.data/`.
+- Desktop dependencies are installed and pinned by `app/package-lock.json`. The native UI check passes; Windows packaging and installation are still unverified.
 - Real map calibration, patch-compatible assets, objective ID names, and live API data still need verification. API cache misses use `disable_steam=true` and report errors rather than spending Steam fallback requests or substituting sample data.
 - Phase 0 Windows spike is still required before the real Panorama mod. No VPK or working in-game integration is claimed.
 - See [PLAN.md](PLAN.md), [RESEARCH.md](RESEARCH.md), and [CHECKS.md](CHECKS.md).

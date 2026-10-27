@@ -11,15 +11,18 @@ test('desktop startup creates storage, isolates windows, blocks external navigat
   const root = await mkdtemp(join(tmpdir(), 'replay-mark-main-'));
   try {
     const app = new EventEmitter(), windows = [], errors = [];
-    let storage, quit = 0, closed = false, finishWrites;
+    let storage, quit = 0, closed = false, finishWrites, ready;
+    const readiness = new Promise(resolve => { ready = resolve; });
     const pendingWrites = new Promise(resolve => { finishWrites = resolve; });
-    Object.assign(app, { requestSingleInstanceLock: () => true, setName() {}, setPath: (_name, path) => { assert.ok(existsSync(path)); storage = path; }, getPath: () => storage, whenReady: async () => {}, quit: () => { quit++; } });
+    Object.assign(app, { requestSingleInstanceLock: () => true, setName() {}, setPath: (_name, path) => { assert.ok(existsSync(path)); storage = path; }, getPath: () => storage, whenReady: () => readiness, quit: () => { quit++; } });
     class BrowserWindow {
       constructor(options) { this.options = options; this.webContents = new EventEmitter(); this.webContents.session = { setPermissionRequestHandler: callback => { this.permission = callback; } }; this.webContents.setWindowOpenHandler = callback => { this.open = callback; }; windows.push(this); }
       async loadURL(url) { this.url = url; }
     }
     const script = (await readFile(new URL('../main.js', import.meta.url), 'utf8')).replace(/^import .*;\n/gm, '');
     await vm.runInNewContext(`(async () => { ${script} })()`, { app, BrowserWindow, dialog: { showErrorBox: (...args) => errors.push(args) }, resolve, mkdirSync, defaultDataDir: () => join(root, 'new-storage'), startServer: async () => ({ flush: () => pendingWrites, closeAllConnections: () => { closed = true; }, close() {} }), URL });
+    assert.equal(windows.length, 0);
+    ready(); await new Promise(resolve => setImmediate(resolve));
     assert.deepEqual(errors, []);
     assert.equal(windows[0].url, 'http://127.0.0.1:47800/');
     assert.equal(windows[0].options.webPreferences.nodeIntegration, false);
