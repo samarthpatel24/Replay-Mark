@@ -4,6 +4,17 @@ export const fmt = seconds => `${Math.floor(Math.max(0, seconds) / 60)}:${String
 export const clamp = (n, max) => Math.max(0, Math.min(max, n));
 export const color = team => team === 0 ? '#e7ae58' : '#87b2e7';
 
+// shortcut: current Midtown mid-layer centers; use versioned world objectives when historical maps are supported.
+// Checked against https://deadlocklabs.gg/matches/125682043/?tab=replay at 5:00.
+const MIDTOWN_OBJECTIVES = {
+  team0_core: [.502, .8564], team1_core: [.501, .1357],
+  team0_titan: [.4961, .7412], team1_titan: [.499, .248],
+  team0_tier2_1: [.1211, .5898], team0_tier2_3: [.5107, .5771], team0_tier2_4: [.835, .5596],
+  team1_tier2_1: [.1641, .4189], team1_tier2_3: [.4883, .4258], team1_tier2_4: [.8818, .4063],
+  team0_tier1_1: [.2148, .7207], team0_tier1_3: [.418, .6455], team0_tier1_4: [.7656, .7236],
+  team1_tier1_1: [.2422, .2695], team1_tier1_3: [.582, .3574], team1_tier1_4: [.7852, .2773]
+};
+
 export function parseTimestamp(value, duration) {
   if (!Number.isFinite(duration)) throw new Error('Wait for the match to load.');
   if (!/^\d+:[0-5]\d$/.test(value.trim())) throw new Error('Enter a timestamp as minutes:seconds, e.g. 12:40.');
@@ -72,7 +83,9 @@ export function mapGeometry(map, objectives = []) {
     if (!parts || !Number.isFinite(pos.left_relative) || !Number.isFinite(pos.top_relative)) continue;
     const team = Number(parts[1]), id = parts[2] === 'core' ? 0 : parts[2] === 'titan' ? 9 : Number(parts[4]) + (parts[3] === '2' ? 4 : 0);
     const event = objectives.find(o => o.team === team && o.team_objective_id === id && o.destroyed_time_s > 0);
-    result.objectives.push({ key, team, name: objectiveName(id), pos: { x: pos.left_relative * 600, y: pos.top_relative * 600 }, destroyedAt: event?.destroyed_time_s ?? null });
+    const calibrated = map.images?.minimap?.endsWith('/minimap_midtown_mid.png') ? MIDTOWN_OBJECTIVES[key] : null;
+    const [left, top] = calibrated || [pos.left_relative, pos.top_relative];
+    result.objectives.push({ key, team, name: objectiveName(id), pos: { x: left * 600, y: top * 600 }, destroyedAt: event?.destroyed_time_s ?? null });
   }
   return result;
 }

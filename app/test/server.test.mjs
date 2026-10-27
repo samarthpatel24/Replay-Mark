@@ -25,6 +25,9 @@ test('map layers share world projection, zipline origins/handles, and objective 
   assert.deepEqual(geometry.objectives[0].pos, { x: 300, y: 150 });
   assert.equal(geometry.objectives[0].destroyedAt, 120);
   assert.equal(geometry.objectives[0].name, 'Guardian · Lane 3');
+  const midtown = mapGeometry({ radius: 10752, images: { minimap: 'https://example.com/minimap_midtown_mid.png' }, objective_positions: { team0_core: { left_relative: .2905, top_relative: .92 } } });
+  assert.ok(Math.abs(midtown.objectives[0].pos.x - 301.2) < 1e-9);
+  assert.ok(Math.abs(midtown.objectives[0].pos.y - 513.84) < 1e-9);
   assert.deepEqual(mapGeometry(null), { lanes: [], camps: [], objectives: [] });
 });
 
