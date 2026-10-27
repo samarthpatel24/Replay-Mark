@@ -1,0 +1,25 @@
+{
+  "name": "replay-mark",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local Deadlock replay bookmarks and match analysis",
+  "type": "module",
+  "main": "main.js",
+  "engines": { "node": ">=22.12" },
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "test": "node --test test/*.test.mjs",
+    "dist": "electron-builder --win portable nsis --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.0.0",
+    "electron-builder": "^27.0.0"
+  },
+  "build": {
+    "appId": "app.replaymark.desktop",
+    "productName": "Replay Mark",
+    "files": ["main.js", "server.js", "model.mjs", "viewer/**", "bridge.html", "bridge.js", "hud.html", "hud.js", "package.json"],
+    "win": { "target": ["portable", "nsis"] }
+  }
+}
