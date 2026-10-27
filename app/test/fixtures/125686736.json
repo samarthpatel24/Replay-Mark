@@ -1,0 +1,968 @@
+{
+  "source": {
+    "url": "https://api.deadlock-api.com/v1/matches/125686736/metadata?disable_steam=true",
+    "changes": "First two players only; account IDs anonymized; movement arrays shortened to first four samples; irrelevant fields removed. Not a complete match."
+  },
+  "match_info": {
+    "match_id": 125686736,
+    "duration_s": 1520,
+    "players": [
+      {
+        "player_slot": 3,
+        "team": 0,
+        "hero_id": 20,
+        "account_id": 1001,
+        "items": [
+          {
+            "game_time_s": 18,
+            "item_id": 3642273386,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 64,
+            "item_id": 3642273386,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 107,
+            "item_id": 1531378655,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 184,
+            "item_id": 4111222521,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 195,
+            "item_id": 2356412290,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 262,
+            "item_id": 3642273386,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 270,
+            "item_id": 2829638276,
+            "sold_time_s": 463
+          },
+          {
+            "game_time_s": 340,
+            "item_id": 3633614685,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 359,
+            "item_id": 1247583368,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 360,
+            "item_id": 1247583368,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 430,
+            "item_id": 1531378655,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 463,
+            "item_id": 2566692615,
+            "sold_time_s": 1244
+          },
+          {
+            "game_time_s": 467,
+            "item_id": 3074274290,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 481,
+            "item_id": 1531378655,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 731,
+            "item_id": 4111222521,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 769,
+            "item_id": 1531378655,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 837,
+            "item_id": 811521119,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 837,
+            "item_id": 1439347412,
+            "sold_time_s": 1011
+          },
+          {
+            "game_time_s": 838,
+            "item_id": 2603935618,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 866,
+            "item_id": 4111222521,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 909,
+            "item_id": 876563814,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 909,
+            "item_id": 7409189,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 1011,
+            "item_id": 2947183272,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 1012,
+            "item_id": 754480263,
+            "sold_time_s": 1344
+          },
+          {
+            "game_time_s": 1035,
+            "item_id": 3642273386,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 1150,
+            "item_id": 1247583368,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 1244,
+            "item_id": 1427630806,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 1344,
+            "item_id": 1193964439,
+            "sold_time_s": 0
+          }
+        ],
+        "stats": [
+          {
+            "time_stamp_s": 180,
+            "net_worth": 1990,
+            "kills": 0,
+            "deaths": 0,
+            "assists": 1,
+            "player_damage": 491,
+            "creep_kills": 7,
+            "level": 4
+          },
+          {
+            "time_stamp_s": 360,
+            "net_worth": 3928,
+            "kills": 1,
+            "deaths": 1,
+            "assists": 2,
+            "player_damage": 1340,
+            "creep_kills": 12,
+            "level": 8
+          },
+          {
+            "time_stamp_s": 540,
+            "net_worth": 6848,
+            "kills": 3,
+            "deaths": 1,
+            "assists": 3,
+            "player_damage": 2594,
+            "creep_kills": 18,
+            "level": 12
+          },
+          {
+            "time_stamp_s": 720,
+            "net_worth": 10103,
+            "kills": 3,
+            "deaths": 2,
+            "assists": 7,
+            "player_damage": 3741,
+            "creep_kills": 21,
+            "level": 16
+          },
+          {
+            "time_stamp_s": 900,
+            "net_worth": 14525,
+            "kills": 4,
+            "deaths": 2,
+            "assists": 11,
+            "player_damage": 6647,
+            "creep_kills": 27,
+            "level": 21
+          },
+          {
+            "time_stamp_s": 1200,
+            "net_worth": 24419,
+            "kills": 6,
+            "deaths": 2,
+            "assists": 16,
+            "player_damage": 9819,
+            "creep_kills": 39,
+            "level": 27
+          },
+          {
+            "time_stamp_s": 1500,
+            "net_worth": 31479,
+            "kills": 6,
+            "deaths": 2,
+            "assists": 21,
+            "player_damage": 11850,
+            "creep_kills": 54,
+            "level": 30
+          },
+          {
+            "time_stamp_s": 1520,
+            "net_worth": 31754,
+            "kills": 6,
+            "deaths": 2,
+            "assists": 22,
+            "player_damage": 12522,
+            "creep_kills": 60,
+            "level": 30
+          }
+        ],
+        "death_details": [
+          {
+            "game_time_s": 207,
+            "killer_player_slot": 8,
+            "death_pos": {
+              "x": -8076.9375,
+              "y": -1835.0938,
+              "z": 248.03125
+            },
+            "death_duration_s": 8
+          },
+          {
+            "game_time_s": 624,
+            "killer_player_slot": 8,
+            "death_pos": {
+              "x": -8199.656,
+              "y": -1472.3438,
+              "z": 263.09375
+            },
+            "death_duration_s": 28
+          }
+        ]
+      },
+      {
+        "player_slot": 12,
+        "team": 1,
+        "hero_id": 80,
+        "account_id": 1002,
+        "items": [
+          {
+            "game_time_s": 12,
+            "item_id": 1385849824,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 62,
+            "item_id": 1385849824,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 102,
+            "item_id": 3862866912,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 110,
+            "item_id": 2717130900,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 171,
+            "item_id": 1437614329,
+            "sold_time_s": 1041
+          },
+          {
+            "game_time_s": 205,
+            "item_id": 2717130900,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 238,
+            "item_id": 3983754897,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 367,
+            "item_id": 1342610602,
+            "sold_time_s": 1040
+          },
+          {
+            "game_time_s": 370,
+            "item_id": 4139877411,
+            "sold_time_s": 826
+          },
+          {
+            "game_time_s": 375,
+            "item_id": 1385849824,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 403,
+            "item_id": 515791019,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 630,
+            "item_id": 393974127,
+            "sold_time_s": 825
+          },
+          {
+            "game_time_s": 519,
+            "item_id": 98582110,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 634,
+            "item_id": 515791019,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 635,
+            "item_id": 515791019,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 636,
+            "item_id": 3983754897,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 825,
+            "item_id": 3791587546,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 826,
+            "item_id": 3977876567,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 837,
+            "item_id": 2717130900,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 950,
+            "item_id": 2717130900,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 1040,
+            "item_id": 2095565695,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 1041,
+            "item_id": 1252627263,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 1137,
+            "item_id": 3983754897,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 1315,
+            "item_id": 1414319208,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 1346,
+            "item_id": 2356412290,
+            "sold_time_s": 0
+          },
+          {
+            "game_time_s": 1490,
+            "item_id": 515791019,
+            "sold_time_s": 0
+          }
+        ],
+        "stats": [
+          {
+            "time_stamp_s": 180,
+            "net_worth": 1823,
+            "kills": 0,
+            "deaths": 0,
+            "assists": 0,
+            "player_damage": 1401,
+            "creep_kills": 7,
+            "level": 4
+          },
+          {
+            "time_stamp_s": 360,
+            "net_worth": 3340,
+            "kills": 0,
+            "deaths": 2,
+            "assists": 0,
+            "player_damage": 3177,
+            "creep_kills": 9,
+            "level": 7
+          },
+          {
+            "time_stamp_s": 540,
+            "net_worth": 5583,
+            "kills": 0,
+            "deaths": 4,
+            "assists": 0,
+            "player_damage": 6130,
+            "creep_kills": 18,
+            "level": 10
+          },
+          {
+            "time_stamp_s": 720,
+            "net_worth": 7716,
+            "kills": 0,
+            "deaths": 6,
+            "assists": 0,
+            "player_damage": 8345,
+            "creep_kills": 24,
+            "level": 13
+          },
+          {
+            "time_stamp_s": 900,
+            "net_worth": 11656,
+            "kills": 1,
+            "deaths": 7,
+            "assists": 0,
+            "player_damage": 12173,
+            "creep_kills": 30,
+            "level": 18
+          },
+          {
+            "time_stamp_s": 1200,
+            "net_worth": 17808,
+            "kills": 2,
+            "deaths": 9,
+            "assists": 0,
+            "player_damage": 19045,
+            "creep_kills": 49,
+            "level": 23
+          },
+          {
+            "time_stamp_s": 1500,
+            "net_worth": 21530,
+            "kills": 2,
+            "deaths": 12,
+            "assists": 0,
+            "player_damage": 26097,
+            "creep_kills": 62,
+            "level": 26
+          },
+          {
+            "time_stamp_s": 1520,
+            "net_worth": 21530,
+            "kills": 2,
+            "deaths": 12,
+            "assists": 0,
+            "player_damage": 26097,
+            "creep_kills": 62,
+            "level": 26
+          }
+        ],
+        "death_details": [
+          {
+            "game_time_s": 187,
+            "killer_player_slot": 2,
+            "death_pos": {
+              "x": -500.59375,
+              "y": 1403,
+              "z": 384.03125
+            },
+            "death_duration_s": 8
+          },
+          {
+            "game_time_s": 362,
+            "killer_player_slot": 2,
+            "death_pos": {
+              "x": -33.8125,
+              "y": 440.84375,
+              "z": 248.03125
+            },
+            "death_duration_s": 10
+          },
+          {
+            "game_time_s": 428,
+            "killer_player_slot": 1,
+            "death_pos": {
+              "x": 547.625,
+              "y": -394.5,
+              "z": 296.40625
+            },
+            "death_duration_s": 12
+          },
+          {
+            "game_time_s": 505,
+            "killer_player_slot": 1,
+            "death_pos": {
+              "x": 218.6875,
+              "y": -1096.1875,
+              "z": 376.03125
+            },
+            "death_duration_s": 15
+          },
+          {
+            "game_time_s": 627,
+            "killer_player_slot": 1,
+            "death_pos": {
+              "x": -124,
+              "y": 349.75,
+              "z": 248.03125
+            },
+            "death_duration_s": 19
+          },
+          {
+            "game_time_s": 719,
+            "killer_player_slot": 5,
+            "death_pos": {
+              "x": 6686.8374,
+              "y": 513.1937,
+              "z": 128.0625
+            },
+            "death_duration_s": 22
+          },
+          {
+            "game_time_s": 823,
+            "killer_player_slot": 1,
+            "death_pos": {
+              "x": -1432.5625,
+              "y": -1371.9062,
+              "z": 322.0625
+            },
+            "death_duration_s": 25
+          },
+          {
+            "game_time_s": 1038,
+            "killer_player_slot": 2,
+            "death_pos": {
+              "x": 7165.9375,
+              "y": -2005.8125,
+              "z": 256.03125
+            },
+            "death_duration_s": 33
+          },
+          {
+            "game_time_s": 1121,
+            "killer_player_slot": 1,
+            "death_pos": {
+              "x": 8244.594,
+              "y": 2315.3438,
+              "z": 248.03125
+            },
+            "death_duration_s": 35
+          },
+          {
+            "game_time_s": 1308,
+            "killer_player_slot": 5,
+            "death_pos": {
+              "x": 5965.4688,
+              "y": -4705.7188,
+              "z": 392
+            },
+            "death_duration_s": 44
+          },
+          {
+            "game_time_s": 1435,
+            "killer_player_slot": 6,
+            "death_pos": {
+              "x": 1955.9688,
+              "y": 6496.0938,
+              "z": 640.09375
+            },
+            "death_duration_s": 51
+          },
+          {
+            "game_time_s": 1496,
+            "killer_player_slot": 5,
+            "death_pos": {
+              "x": 1659.7812,
+              "y": 8212.5625,
+              "z": 644.71875
+            },
+            "death_duration_s": 54
+          }
+        ]
+      }
+    ],
+    "match_paths": {
+      "interval_s": 1,
+      "x_resolution": 16383,
+      "y_resolution": 16383,
+      "paths": [
+        {
+          "player_slot": 3,
+          "x_min": -8897.5,
+          "x_max": 8766.969,
+          "y_min": -10096.75,
+          "y_max": 10576,
+          "x_pos": [
+            6814,
+            6814,
+            6814,
+            6814
+          ],
+          "y_pos": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "health": [
+            100,
+            100,
+            100,
+            100
+          ]
+        },
+        {
+          "player_slot": 12,
+          "x_min": -3954.7188,
+          "x_max": 8242.9375,
+          "y_min": -5301.9375,
+          "y_max": 10294.125,
+          "x_pos": [
+            7035,
+            7035,
+            7035,
+            7035
+          ],
+          "y_pos": [
+            16335,
+            16383,
+            16383,
+            16383
+          ],
+          "health": [
+            100,
+            100,
+            100,
+            100
+          ]
+        }
+      ]
+    },
+    "objectives": [
+      {
+        "team_objective_id": 4,
+        "team": 1,
+        "destroyed_time_s": 421
+      },
+      {
+        "team_objective_id": 1,
+        "team": 0,
+        "destroyed_time_s": 834
+      },
+      {
+        "team_objective_id": 3,
+        "team": 1,
+        "destroyed_time_s": 416
+      },
+      {
+        "team_objective_id": 4,
+        "team": 0,
+        "destroyed_time_s": 815
+      },
+      {
+        "team_objective_id": 3,
+        "team": 0,
+        "destroyed_time_s": 682
+      },
+      {
+        "team_objective_id": 1,
+        "team": 1,
+        "destroyed_time_s": 637
+      },
+      {
+        "team_objective_id": 8,
+        "team": 1,
+        "destroyed_time_s": 1101
+      },
+      {
+        "team_objective_id": 7,
+        "team": 1,
+        "destroyed_time_s": 864
+      },
+      {
+        "team_objective_id": 7,
+        "team": 0,
+        "destroyed_time_s": 0
+      },
+      {
+        "team_objective_id": 5,
+        "team": 1,
+        "destroyed_time_s": 1070
+      },
+      {
+        "team_objective_id": 8,
+        "team": 0,
+        "destroyed_time_s": 0
+      },
+      {
+        "team_objective_id": 5,
+        "team": 0,
+        "destroyed_time_s": 0
+      },
+      {
+        "team_objective_id": 14,
+        "team": 1,
+        "destroyed_time_s": 1286
+      },
+      {
+        "team_objective_id": 15,
+        "team": 1,
+        "destroyed_time_s": 1359
+      },
+      {
+        "team_objective_id": 10,
+        "team": 1,
+        "destroyed_time_s": 1457
+      },
+      {
+        "team_objective_id": 11,
+        "team": 1,
+        "destroyed_time_s": 1442
+      },
+      {
+        "team_objective_id": 12,
+        "team": 1,
+        "destroyed_time_s": 1420
+      },
+      {
+        "team_objective_id": 9,
+        "team": 1,
+        "destroyed_time_s": 1479
+      },
+      {
+        "team_objective_id": 0,
+        "team": 1,
+        "destroyed_time_s": 1520
+      }
+    ]
+  },
+  "assets": {
+    "heroes": [
+      {
+        "id": 20,
+        "name": "Ivy"
+      },
+      {
+        "id": 80,
+        "name": "Silver"
+      }
+    ],
+    "items": [
+      {
+        "id": 1531378655,
+        "name": "Kudzu Connection",
+        "type": "ability"
+      },
+      {
+        "id": 4111222521,
+        "name": "Entangling Thorns",
+        "type": "ability"
+      },
+      {
+        "id": 3642273386,
+        "name": "Stone Form",
+        "type": "ability"
+      },
+      {
+        "id": 1247583368,
+        "name": "Air Drop",
+        "type": "ability"
+      },
+      {
+        "id": 811521119,
+        "name": "Tesla Bullets",
+        "type": "upgrade",
+        "cost": 3200
+      },
+      {
+        "id": 1437614329,
+        "name": "Melee Lifesteal",
+        "type": "upgrade",
+        "cost": 800
+      },
+      {
+        "id": 3791587546,
+        "name": "Weighted Shots",
+        "type": "upgrade",
+        "cost": 3200
+      },
+      {
+        "id": 1342610602,
+        "name": "Close Quarters",
+        "type": "upgrade",
+        "cost": 800
+      },
+      {
+        "id": 393974127,
+        "name": "Slowing Bullets",
+        "type": "upgrade",
+        "cost": 1600
+      },
+      {
+        "id": 1414319208,
+        "name": "Berserker",
+        "type": "upgrade",
+        "cost": 3200
+      },
+      {
+        "id": 2095565695,
+        "name": "Point Blank",
+        "type": "upgrade",
+        "cost": 3200
+      },
+      {
+        "id": 3633614685,
+        "name": "Extra Health",
+        "type": "upgrade",
+        "cost": 800
+      },
+      {
+        "id": 2566692615,
+        "name": "Healing Booster",
+        "type": "upgrade",
+        "cost": 1600
+      },
+      {
+        "id": 3074274290,
+        "name": "Trophy Collector",
+        "type": "upgrade",
+        "cost": 1600
+      },
+      {
+        "id": 4139877411,
+        "name": "Extra Stamina",
+        "type": "upgrade",
+        "cost": 800
+      },
+      {
+        "id": 1439347412,
+        "name": "Mystic Regeneration",
+        "type": "upgrade",
+        "cost": 800
+      },
+      {
+        "id": 7409189,
+        "name": "Improved Spirit",
+        "type": "upgrade",
+        "cost": 1600
+      },
+      {
+        "id": 1193964439,
+        "name": "Greater Expansion",
+        "type": "upgrade",
+        "cost": 3200
+      },
+      {
+        "id": 754480263,
+        "name": "Mystic Expansion",
+        "type": "upgrade",
+        "cost": 800
+      },
+      {
+        "id": 876563814,
+        "name": "Spirit Lifesteal",
+        "type": "upgrade",
+        "cost": 1600
+      },
+      {
+        "id": 2603935618,
+        "name": "Healbane",
+        "type": "upgrade",
+        "cost": 1600
+      },
+      {
+        "id": 3977876567,
+        "name": "Kinetic Dash",
+        "type": "upgrade",
+        "cost": 1600
+      },
+      {
+        "id": 1252627263,
+        "name": "Lifestrike",
+        "type": "upgrade",
+        "cost": 3200
+      },
+      {
+        "id": 2947183272,
+        "name": "Radiant Regeneration",
+        "type": "upgrade",
+        "cost": 3200
+      },
+      {
+        "id": 2829638276,
+        "name": "Extra Regen",
+        "type": "upgrade",
+        "cost": 800
+      },
+      {
+        "id": 3862866912,
+        "name": "Restorative Shot",
+        "type": "upgrade",
+        "cost": 800
+      },
+      {
+        "id": 2356412290,
+        "name": "Titanic Magazine",
+        "type": "upgrade",
+        "cost": 1600
+      },
+      {
+        "id": 1427630806,
+        "name": "Healing Tempo",
+        "type": "upgrade",
+        "cost": 6400
+      },
+      {
+        "id": 98582110,
+        "name": "Stalker",
+        "type": "upgrade",
+        "cost": 1600
+      },
+      {
+        "id": 1385849824,
+        "name": "Slam Fire",
+        "type": "ability"
+      },
+      {
+        "id": 2717130900,
+        "name": "Boot Kick",
+        "type": "ability"
+      },
+      {
+        "id": 3983754897,
+        "name": "Entangling Bola",
+        "type": "ability"
+      },
+      {
+        "id": 515791019,
+        "name": "Lycan Curse",
+        "type": "ability"
+      }
+    ],
+    "map": {
+      "radius": 10752,
+      "images": {}
+    }
+  }
+}

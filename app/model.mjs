@@ -29,6 +29,13 @@ export function position(player, t) {
   return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
 }
 
+export function healthAt(player, t) {
+  const path = player.path;
+  if (!path || !(path.interval > 0)) return null;
+  const health = path.health?.[Math.floor(t / path.interval)];
+  return Number.isFinite(health) && health >= 0 && health <= 100 ? health : null;
+}
+
 export function snapshot(player, t) {
   return player.stats.filter(s => s.t <= t).at(-1) || { t: null, net_worth: null, kills: null, deaths: null, assists: null };
 }
@@ -63,7 +70,7 @@ export function sampleMatch() {
 }
 
 export function normalizeMatch(id, raw, assets) {
-  const info = raw.match_info;
+  const info = raw?.match_info;
   if (!info || !Number.isFinite(info.duration_s) || info.duration_s <= 0 || !info.players?.length) throw new Error('Match metadata is missing duration or players.');
   const heroes = new Map((assets.heroes || []).map(h => [h.id, h]));
   const items = new Map((assets.items || []).map(i => [i.id, i]));
@@ -75,19 +82,31 @@ export function normalizeMatch(id, raw, assets) {
     const hero = heroes.get(p.hero_id);
     const path = paths?.paths?.find(path => path.player_slot === p.player_slot);
     let converted = null;
-    if (path && paths.x_resolution > 0 && paths.y_resolution > 0) {
-      converted = { interval: paths.interval_s, x: path.x_pos.map(x => (1 + (path.x_min + x / paths.x_resolution * (path.x_max - path.x_min)) / radius) * 300), y: path.y_pos.map(y => (1 - (path.y_min + y / paths.y_resolution * (path.y_max - path.y_min)) / radius) * 300) };
+    if (path && paths.x_resolution > 0 && paths.y_resolution > 0 && paths.interval_s > 0 && Array.isArray(path.x_pos) && Array.isArray(path.y_pos)) {
+      converted = { interval: paths.interval_s, health: Array.isArray(path.health) ? path.health : [], x: path.x_pos.map(x => (1 + (path.x_min + x / paths.x_resolution * (path.x_max - path.x_min)) / radius) * 300), y: path.y_pos.map(y => (1 - (path.y_min + y / paths.y_resolution * (path.y_max - path.y_min)) / radius) * 300) };
     }
     return { slot: p.player_slot, team: p.team, account: p.account_id, name: hero?.name || `Hero ${p.hero_id}`, person: profiles.get(p.account_id) || `Account ${p.account_id}`, icon: hero?.images?.minimap_image || '', path: converted,
       stats: (p.stats || []).map(s => ({ ...s, t: s.time_stamp_s })).sort((a, b) => a.t - b.t),
       items: (p.items || []).filter(i => items.get(i.item_id)?.type === 'upgrade').map(i => ({ t: i.game_time_s, sold: i.sold_time_s, name: items.get(i.item_id).name, icon: items.get(i.item_id).image || '', cost: items.get(i.item_id).cost || 0 })) };
   });
   const kills = info.players.flatMap(p => (p.death_details || []).map(d => ({ t: d.game_time_s, victim: p.player_slot, killer: d.killer_player_slot, duration: d.death_duration_s || 0, pos: project(d.death_pos) }))).sort((a, b) => a.t - b.t);
-  const objectives = (info.objectives || []).filter(o => o.destroyed_time_s > 0).map(o => ({ t: o.destroyed_time_s, team: o.team, name: `Objective ${o.team_objective_id}`, pos: null })).sort((a, b) => a.t - b.t);
+  const objectives = (info.objectives || []).filter(o => o.destroyed_time_s > 0).map(o => ({ t: o.destroyed_time_s, team: o.team, name: objectiveName(o.team_objective_id), pos: null })).sort((a, b) => a.t - b.t);
   const warnings = [];
   if (players.some(p => !p.path)) warnings.push('Some movement paths are unavailable.');
+  if (players.some(p => p.path && Math.min(p.path.x.length, p.path.y.length) <= Math.floor(info.duration_s / p.path.interval))) warnings.push('Some movement paths end early; missing positions are hidden.');
   if (!assets.items?.length) warnings.push('Item assets unavailable; purchase classification omitted.');
   if (!assets.heroes?.length) warnings.push('Hero assets unavailable; showing hero IDs.');
   if (!assets.map) warnings.push('Map asset unavailable; schematic background only.');
   return { id: String(id), label: `Match #${id}`, duration: info.duration_s, sample: false, players, kills, objectives, map: assets.map?.images?.minimap || null, warnings };
+}
+
+// ECitadelTeamObjective: SteamDatabase/Protobufs/deadlock/citadel_gcmessages_common.proto.
+function objectiveName(id) {
+  if (id === 0) return 'Patron core';
+  if (id >= 1 && id <= 4) return `Guardian · Lane ${id}`;
+  if (id >= 5 && id <= 8) return `Walker · Lane ${id - 4}`;
+  if (id === 9) return 'Patron';
+  if (id === 10 || id === 11) return `Shield generator ${id - 9}`;
+  if (id >= 12 && id <= 15) return `Base guardian · Lane ${id - 11}`;
+  return `Objective ${id}`;
 }

@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import vm from 'node:vm';
 import { createServer } from '../server.js';
 import { transport } from './transport.mjs';
-import { sampleMatch, normalizeMatch, position, playbackTime, snapshot, parseTimestamp, itemsAt } from '../model.mjs';
+import { sampleMatch, normalizeMatch, position, playbackTime, snapshot, parseTimestamp, itemsAt, healthAt } from '../model.mjs';
 import { escapeHTML, safeImage } from '../viewer/client.js';
 
 test('timestamp entry accepts exact boundaries and rejects invalid or out-of-match times', () => {
@@ -15,6 +15,32 @@ test('timestamp entry accepts exact boundaries and rejects invalid or out-of-mat
   assert.equal(parseTimestamp('25:20', 1520), 1520);
   for (const value of ['', '12:60', '12:4', '-1:00', '1:02:03', '25:21', 'Infinity:00']) assert.throws(() => parseTimestamp(value, 1520));
   assert.throws(() => parseTimestamp('12:40', undefined), /load/);
+});
+
+test('real metadata: non-contiguous slots, path endings, health, stats gaps, objectives, and shop items', async () => {
+  const fixture = JSON.parse(await readFile(new URL('./fixtures/125686736.json', import.meta.url), 'utf8'));
+  const match = normalizeMatch('125686736', fixture, fixture.assets);
+  assert.equal(match.sample, false);
+  assert.equal(match.duration, 1520);
+  assert.deepEqual(match.players.map(p => p.slot), [3, 12]);
+  assert.deepEqual(match.players.map(p => p.name), ['Ivy', 'Silver']);
+  const ivy = match.players[0];
+  assert.equal(healthAt(ivy, 0), 100);
+  assert.equal(healthAt(ivy, 4), null);
+  assert.ok(position(ivy, 3));
+  assert.equal(position(ivy, 4), null);
+  assert.ok(match.warnings.some(w => w.includes('end early')));
+  assert.equal(snapshot(ivy, 179).net_worth, null);
+  assert.equal(snapshot(ivy, 1199).t, 900);
+  assert.equal(snapshot(ivy, 1200).t, 1200);
+  assert.equal(ivy.items.length, 14);
+  assert.ok(itemsAt(ivy, 270).some(i => i.name === 'Extra Regen'));
+  assert.equal(itemsAt(ivy, 463).some(i => i.name === 'Extra Regen'), false);
+  assert.ok(match.objectives.some(o => o.t === 1520 && o.name === 'Patron core'));
+  assert.equal(match.objectives.some(o => o.t === 0), false);
+  const unknown = { ...ivy, path: { ...ivy.path, health: [0, 101] } };
+  assert.equal(healthAt(unknown, 0), 0);
+  assert.equal(healthAt(unknown, 1), null);
 });
 
 test('map decoding, missing data, snapshot boundaries, and playback', () => {
