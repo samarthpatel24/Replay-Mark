@@ -1,5 +1,5 @@
 import { connect, escapeHTML as esc, safeImage, $ } from './client.js';
-import { SAMPLE_ID, TAGS, fmt, clamp, color, playbackTime, position, snapshot, parseTimestamp, itemsAt } from './model.mjs';
+import { SAMPLE_ID, TAGS, fmt, clamp, color, playbackTime, position, snapshot, parseTimestamp, itemsAt, healthAt } from './model.mjs';
 
 let api, state, match, selected = 0, tab = 'bookmarks', filter = 'all', thread = null, local, loading = 0, modalContext;
 let previousSecond = -1, previousBookmarks = '', displayedActive = null;
@@ -62,8 +62,8 @@ const seek = t => control({ t: clamp(t, match.duration) });
 function renderRoster() {
   const t = now();
   $('#players').innerHTML = [0, 1].map(team => `<div class="roster-team" style="color:${color(team)}">${team === 0 ? 'AMBER' : 'SAPPHIRE'}</div>` + match.players.filter(p => p.team === team).map(p => {
-    const s = snapshot(p, t), icon = safeImage(p.icon);
-    return `<button class="player-row ${p.slot === selected ? 'selected' : ''}" data-player="${p.slot}" aria-pressed="${p.slot === selected}"><span class="hero-avatar ${p.team === 1 ? 'blue' : ''}">${icon ? `<img src="${icon}" alt="">` : esc(p.name.slice(0, 2).toUpperCase())}</span><span class="player-info">${esc(p.name)}<small>${esc(p.person)}</small><small>${s.net_worth == null ? 'Souls unavailable' : s.net_worth.toLocaleString() + ' souls'} · ${itemsAt(p, t).length} items</small></span><span class="kda">${s.kills ?? '—'} / ${s.deaths ?? '—'} / ${s.assists ?? '—'}</span></button>`;
+    const s = snapshot(p, t), icon = safeImage(p.icon), health = healthAt(p, t);
+    return `<button class="player-row ${p.slot === selected ? 'selected' : ''}" data-player="${p.slot}" aria-pressed="${p.slot === selected}"><span class="hero-avatar ${p.team === 1 ? 'blue' : ''}">${icon ? `<img src="${icon}" alt="">` : esc(p.name.slice(0, 2).toUpperCase())}</span><span class="player-info">${esc(p.name)}${s.level == null ? '' : `<span class="player-level">Lv ${s.level}</span>`}<small>${esc(p.person)}</small><small>${s.net_worth == null ? 'Souls unavailable' : s.net_worth.toLocaleString() + ' souls'} · ${itemsAt(p, t).length} items</small>${health == null ? '' : `<span class="health-bar" role="meter" aria-label="${esc(p.name)} health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${health}" title="Recorded health: ${health}%"><i style="width:${health}%"></i></span>`}</span><span class="kda">${s.kills ?? '—'} / ${s.deaths ?? '—'} / ${s.assists ?? '—'}</span></button>`;
   }).join('')).join('');
 }
 
