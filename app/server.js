@@ -68,10 +68,13 @@ export async function createServer({ dataDir = defaultDataDir(), fetcher = fetch
     matches.set(id, result);
     return result;
   }
+  function validateNote(data) {
+    if (typeof data.title !== 'string' || !data.title.trim() || data.title.length > 160 || !TAGS.includes(data.tag)) throw fail(400, 'Provide a title (1–160 characters) and valid tag.');
+  }
   function bookmark(data, source = 'app') {
     if (!validId(data.match) || !matches.has(data.match)) throw fail(400, 'Load the match before adding a bookmark.');
     if (typeof data.t !== 'number' || !Number.isFinite(data.t) || data.t < 0 || data.t > matches.get(data.match).duration) throw fail(400, 'Bookmark time is outside this match.');
-    if (typeof data.title !== 'string' || !data.title.trim() || data.title.length > 160 || !TAGS.includes(data.tag)) throw fail(400, 'Provide a title (1–160 characters) and valid tag.');
+    validateNote(data);
     return { id: 'b_' + randomUUID(), match: data.match, t: Math.round(data.t), title: data.title.trim(), tag: data.tag, spec: typeof data.spec === 'string' ? data.spec.slice(0, 80) : '', by: 'you', source, created: Date.now(), comments: [] };
   }
   function bridgeState(session = '') {
@@ -129,8 +132,9 @@ export async function createServer({ dataDir = defaultDataDir(), fetcher = fetch
         if (typeof data.text !== 'string' || !data.text.trim() || data.text.length > 2000) throw fail(400, 'Comment must contain 1–2000 characters.');
         b.comments.push({ by: 'you', text: data.text.trim(), at: Date.now() });
       } else if (!route[2] && req.method === 'PATCH') {
-        const validated = bookmark({ ...b, ...data, match: b.match, t: b.t });
-        b.title = validated.title; b.tag = validated.tag;
+        const edited = { ...b, ...data };
+        validateNote(edited);
+        b.title = edited.title.trim(); b.tag = edited.tag;
       } else if (!route[2] && req.method === 'DELETE') next.bookmarks = next.bookmarks.filter(b => b.id !== route[1]);
       else throw fail(405, 'Method not allowed.');
     }

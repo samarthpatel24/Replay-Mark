@@ -166,6 +166,33 @@ test('HTTP handlers: workspace, SSE, bridge, validation, cache, restart persiste
   assert.ok(bounded.beat > 0);
 });
 
+test('saved real-match bookmarks remain editable after restart without fetching match data', async () => {
+  const dataDir = await mkdtemp(join(tmpdir(), 'replay-mark-edit-'));
+  const fixture = JSON.parse(await readFile(new URL('./fixtures/125686736.json', import.meta.url), 'utf8'));
+  let connection;
+  try {
+    connection = transport(await createServer({ dataDir, fetcher: async url => Response.json(url.includes('/metadata') ? fixture : []) }));
+    const origin = 'http://127.0.0.1:47800';
+    const { token } = await (await connection.fetch(origin + '/api/session')).json();
+    const request = (path, method, data) => connection.fetch(origin + path, { method, headers: { 'Content-Type': 'application/json', 'X-RM-Token': token }, body: JSON.stringify(data) });
+    await connection.fetch(origin + '/api/match/125686736');
+    const created = await (await request('/api/bookmarks', 'POST', { match: '125686736', t: 245, title: 'Before restart', tag: 'note', spec: 'Ivy' })).json();
+    const saved = created.bookmarks[0];
+    connection.close();
+    let fetches = 0;
+    connection = transport(await createServer({ dataDir, fetcher: async () => { fetches++; throw new Error('Offline'); } }));
+    const response = await request('/api/bookmarks/' + saved.id, 'PATCH', { title: 'After restart', tag: 'good', match: 'sample', t: 999, spec: 'Changed' });
+    assert.equal(response.status, 200);
+    const edited = (await response.json()).bookmarks[0];
+    assert.deepEqual(edited, { ...saved, title: 'After restart', tag: 'good' });
+    for (const patch of [{ title: ' ' }, { title: 'x'.repeat(161) }, { tag: 'invalid' }]) {
+      assert.equal((await request('/api/bookmarks/' + saved.id, 'PATCH', patch)).status, 400);
+    }
+    assert.equal(fetches, 0);
+    assert.deepEqual(JSON.parse(await readFile(join(dataDir, 'db.json'), 'utf8')).bookmarks, [edited]);
+  } finally { connection?.close(); await rm(dataDir, { recursive: true, force: true }); }
+});
+
 test('corrupt saved workspace fails without overwriting data', async () => {
   const dataDir = await mkdtemp(join(tmpdir(), 'replay-mark-corrupt-'));
   try { await writeFile(join(dataDir, 'db.json'), '{broken'); await assert.rejects(createServer({ dataDir }), /Cannot read saved workspace/); assert.equal(await readFile(join(dataDir, 'db.json'), 'utf8'), '{broken'); }
