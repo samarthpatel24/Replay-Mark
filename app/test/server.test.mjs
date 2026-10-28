@@ -193,6 +193,42 @@ test('saved real-match bookmarks remain editable after restart without fetching 
   } finally { connection?.close(); await rm(dataDir, { recursive: true, force: true }); }
 });
 
+test('expired assets survive API outages, refresh on recovery, and preserve cache files on failure', async () => {
+  const dataDir = await mkdtemp(join(tmpdir(), 'replay-mark-cache-'));
+  let connection;
+  try {
+    const fixture = JSON.parse(await readFile(new URL('./fixtures/125686736.json', import.meta.url), 'utf8'));
+    fixture.assets.map.images.minimap = 'https://example.com/cached-minimap.png';
+    connection = transport(await createServer({ dataDir }));
+    connection.close();
+    const cache = join(dataDir, 'cache');
+    await writeFile(join(cache, 'match_125686736.json'), JSON.stringify({ at: Date.now(), data: fixture }));
+    const files = {};
+    for (const kind of ['heroes', 'items', 'map']) {
+      files[kind] = JSON.stringify({ at: 1, data: fixture.assets[kind] });
+      await writeFile(join(cache, kind + '.json'), files[kind]);
+    }
+    const failures = [async () => { throw new Error('Offline'); }, async () => Response.json({}, { status: 429 }), async () => new Response('invalid JSON')];
+    for (const fetcher of failures) {
+      connection = transport(await createServer({ dataDir, fetcher }));
+      const response = await connection.fetch('http://127.0.0.1:47800/api/match/125686736');
+      assert.equal(response.status, 200);
+      const match = await response.json();
+      assert.equal(match.players[0].name, 'Ivy');
+      assert.equal(match.players[0].items.length, 14);
+      assert.equal(match.map, fixture.assets.map.images.minimap);
+      for (const kind of Object.keys(files)) assert.equal(await readFile(join(cache, kind + '.json'), 'utf8'), files[kind]);
+      const uncached = await connection.fetch('http://127.0.0.1:47800/api/match/999');
+      assert.ok([429, 502].includes(uncached.status), 'An uncached match must still report upstream failure');
+      connection.close();
+    }
+    connection = transport(await createServer({ dataDir, fetcher: async url => Response.json(url.includes('/assets/heroes') ? fixture.assets.heroes.map(h => ({ ...h, name: 'Refreshed hero' })) : url.includes('/assets/items') ? fixture.assets.items : url.includes('/assets/map') ? fixture.assets.map : []) }));
+    const recovered = await (await connection.fetch('http://127.0.0.1:47800/api/match/125686736')).json();
+    assert.equal(recovered.players[0].name, 'Refreshed hero');
+    assert.ok(JSON.parse(await readFile(join(cache, 'heroes.json'), 'utf8')).at > 1);
+  } finally { connection?.close(); await rm(dataDir, { recursive: true, force: true }); }
+});
+
 test('corrupt saved workspace fails without overwriting data', async () => {
   const dataDir = await mkdtemp(join(tmpdir(), 'replay-mark-corrupt-'));
   try { await writeFile(join(dataDir, 'db.json'), '{broken'); await assert.rejects(createServer({ dataDir }), /Cannot read saved workspace/); assert.equal(await readFile(join(dataDir, 'db.json'), 'utf8'), '{broken'); }

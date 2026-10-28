@@ -42,12 +42,16 @@ export async function createServer({ dataDir = defaultDataDir(), fetcher = fetch
     if (inflight.has(key)) return inflight.get(key);
     const work = (async () => {
       const file = join(dataDir, 'cache', key + '.json');
-      try { const saved = JSON.parse(await readFile(file, 'utf8')); if (Date.now() - saved.at < ttl) return saved.data; } catch (e) { if (e.code !== 'ENOENT' && !(e instanceof SyntaxError)) throw e; }
-      let response;
-      try { response = await fetcher(`https://api.deadlock-api.com${path}`, { signal: AbortSignal.timeout(20000) }); }
-      catch { throw fail(502, 'Deadlock API is unreachable. Check your connection or use Sample match.'); }
-      if (!response.ok) throw fail(response.status === 429 ? 429 : 502, `Deadlock API returned ${response.status}. Try later or use Sample match.`);
-      const data = await response.json();
+      let saved, data;
+      try { saved = JSON.parse(await readFile(file, 'utf8')); if (Date.now() - saved.at < ttl) return saved.data; } catch (e) { if (e.code !== 'ENOENT' && !(e instanceof SyntaxError)) throw e; }
+      try {
+        const response = await fetcher(`https://api.deadlock-api.com${path}`, { signal: AbortSignal.timeout(20000) });
+        if (!response.ok) throw fail(response.status === 429 ? 429 : 502, `Deadlock API returned ${response.status}. Try later or use Sample match.`);
+        data = await response.json();
+      } catch (e) {
+        if (saved) return saved.data;
+        throw e.status ? e : fail(502, 'Deadlock API is unreachable. Check your connection or use Sample match.');
+      }
       await writeFile(file + '.tmp', JSON.stringify({ at: Date.now(), data }));
       await rename(file + '.tmp', file);
       return data;
